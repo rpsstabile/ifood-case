@@ -15,6 +15,35 @@ USING DELTA
 
 # COMMAND ----------
 
+TABLE_NAME = " main.ifood.pipeline_audit"
+
+spark.sql(f"""
+CREATE TABLE IF NOT EXISTS {TABLE_NAME}
+(
+    execution_id STRING,
+    execution_timestamp TIMESTAMP,
+
+    layer STRING,
+    source_system STRING,
+
+    rows_read BIGINT,
+    rows_valid BIGINT,
+    rows_quarantine BIGINT,
+    rows_written BIGINT,
+
+    files_processed INT,
+
+    status STRING,
+
+    execution_time_seconds DOUBLE,
+
+    error_message STRING
+)
+USING DELTA
+""")
+
+# COMMAND ----------
+
 # ============================================================
 # SILVER LAYER - GREEN TAXI
 # ============================================================
@@ -38,7 +67,12 @@ from datetime import datetime
 from functools import reduce
 from pyspark.sql import functions as F
 import re
+from uuid import uuid4
+from datetime import datetime
 
+
+execution_id = str(uuid4())
+start_time = datetime.now()
 
 # ============================================================
 # CONFIGURAÇÕES
@@ -482,4 +516,77 @@ USING DELTA
 AS
 SELECT *
 FROM delta.`/Volumes/main/ifood/ifood_case/silver/green_taxi`
+""")
+
+# COMMAND ----------
+
+from pyspark.sql import Row
+
+end_time = datetime.now()
+
+execution_time = (
+    end_time - start_time
+).total_seconds()
+
+audit_row = Row(
+    execution_id=execution_id,
+    execution_timestamp=end_time,
+
+    layer="silver",
+    source_system="green_taxi",
+
+    rows_read=bronze_count,
+    rows_valid=after_dedup,
+    rows_quarantine=quarantine_count,
+    rows_written=silver_count,
+
+    files_processed=len(new_files),
+
+    status="SUCCESS",
+
+    execution_time_seconds=execution_time,
+
+    error_message=""
+)
+
+from pyspark.sql.types import StructType, StructField, StringType, TimestampType, LongType, IntegerType, DoubleType
+
+schema = StructType([
+    StructField("execution_id", StringType(), True),
+    StructField("execution_timestamp", TimestampType(), True),
+    StructField("layer", StringType(), True),
+    StructField("source_system", StringType(), True),
+    StructField("rows_read", LongType(), True),
+    StructField("rows_valid", LongType(), True),
+    StructField("rows_quarantine", LongType(), True),
+    StructField("rows_written", LongType(), True),
+    StructField("files_processed", IntegerType(), True),
+    StructField("status", StringType(), True),
+    StructField("execution_time_seconds", DoubleType(), True),
+    StructField("error_message", StringType(), True)
+])
+
+audit_df = spark.createDataFrame(
+    [audit_row],
+    schema=schema
+)
+
+(
+    audit_df
+    .write
+    .mode("append")
+    .format("delta")
+    .saveAsTable(
+        "main.ifood.pipeline_audit"
+    )
+)
+
+# COMMAND ----------
+
+spark.sql("""
+CREATE TABLE IF NOT EXISTS main.ifood.green_taxi_quarantine
+USING DELTA
+AS
+SELECT *
+FROM delta.`/Volumes/main/ifood/ifood_case/quarantine/green_taxi/`
 """)

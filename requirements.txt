@@ -1,0 +1,17 @@
+# Requirements for iFood Notebook Project
+# Generated from notebooks in /Workspace/ifood/notebook
+
+# PySpark - Distributed computing framework
+# Note: In Databricks, PySpark is pre-installed with the runtime
+# This is only needed for local development or non-Databricks environments
+pyspark>=3.4.0
+
+# Delta Lake - Storage layer for data lakes
+# Note: In Databricks, Delta Lake is pre-installed with the runtime
+# This is only needed for local development or non-Databricks environments
+delta-spark>=2.4.0
+
+# Notes:
+# - Standard Python libraries used (datetime, functools, re, uuid) are built-in
+# - In Databricks environments, both pyspark and delta-spark are pre-installed
+# - This file is primarily for documentation and local development purposes
