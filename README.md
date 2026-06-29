@@ -162,6 +162,9 @@ Responsável por gerar:
 main.ifood.monthly_revenue
 ```
 
+Obs:alternativa , criar por sql
+ifood-case/src/notebook/monthly_revenue_gold_layer_sql.sql
+
 ---
 
 ### passengers_by_hour
@@ -175,6 +178,10 @@ Responsável por gerar:
 ```text
 main.ifood.passengers_by_hour
 ```
+
+
+Obs:alternativa , criar por sql
+ifood-case/src/notebook/passengers_by_hour_gold_layer_sql.sql
 
 ---
 
